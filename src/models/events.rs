@@ -18,3 +18,9 @@ builder! {RpcServerConfiguration
     api_endpoint: String,
     environment: String,
 }
+
+impl ReadyEvent {
+    pub fn get_user(&self) -> Option<PartialUser> {
+        self.user.clone()
+    }
+}
