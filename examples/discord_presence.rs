@@ -1,9 +1,9 @@
-extern crate simplelog;
 extern crate discord_rpc_client;
+extern crate simplelog;
 
-use std::io;
-use simplelog::*;
 use discord_rpc_client::Client as DiscordRPC;
+use simplelog::*;
+use std::io;
 
 fn main() {
     TermLogger::init(LevelFilter::Debug, Config::default()).unwrap();
@@ -20,19 +20,19 @@ fn main() {
 
         if buf.is_empty() {
             if let Err(why) = drpc.clear_activity() {
-                println!("Failed to clear presence: {}", why);
+                println!("Failed to clear presence: {:?}", why);
             }
         } else {
-            if let Err(why) = drpc.set_activity(|a| a
-                .state(buf)
-                .assets(|ass| ass
-                    .large_image("ferris_wat")
-                    .large_text("wat.")
-                    .small_image("rusting")
-                    .small_text("rusting...")))
-            {
-                println!("Failed to set presence: {}", why);
+            if let Err(why) = drpc.set_activity(|a| {
+                a.state(buf).assets(|ass| {
+                    ass.large_image("ferris_wat")
+                        .large_text("wat.")
+                        .small_image("rusting")
+                        .small_text("rusting...")
+                })
+            }) {
+                println!("Failed to set presence: {:?}", why);
             }
         }
-    };
+    }
 }

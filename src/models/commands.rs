@@ -1,11 +1,12 @@
 use super::shared::PartialUser;
 
+use serde::{Deserialize, Serialize};
 
-builder!{SubscriptionArgs
+builder! {SubscriptionArgs
     secret: String,     // Activity{Join,Spectate}
     user: PartialUser,  // ActivityJoinRequest
 }
 
-builder!{Subscription
+builder! {Subscription
     evt: String,
 }

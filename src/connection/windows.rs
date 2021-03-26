@@ -1,7 +1,4 @@
-use std::{
-    time,
-    path::PathBuf,
-};
+use std::{path::PathBuf, time};
 
 use super::base::Connection;
 use error::Result;

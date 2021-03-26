@@ -1,11 +1,10 @@
-use std::io::{self, Write, Read};
+use std::io::{self, Read, Write};
 
-use byteorder::{WriteBytesExt, ReadBytesExt, LittleEndian};
-use serde_json;
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use serde::Serialize;
+use serde_json;
 
-use error::{Result, Error};
-
+use error::{Error, Result};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum OpCode {
@@ -25,7 +24,7 @@ impl OpCode {
             2 => Ok(OpCode::Close),
             3 => Ok(OpCode::Ping),
             4 => Ok(OpCode::Pong),
-            _ => Err(Error::Conversion)
+            _ => Err(Error::Conversion),
         }
     }
 }
@@ -38,9 +37,13 @@ pub struct Message {
 
 impl Message {
     pub fn new<T>(opcode: OpCode, payload: T) -> Self
-        where T: Serialize
+    where
+        T: Serialize,
     {
-        Self { opcode, payload: serde_json::to_string(&payload).unwrap() }
+        Self {
+            opcode,
+            payload: serde_json::to_string(&payload).unwrap(),
+        }
     }
 
     pub fn encode(&self) -> Result<Vec<u8>> {
@@ -65,14 +68,15 @@ impl Message {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
+    use serde::Deserialize;
+
     use super::*;
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct Something {
-        empty: bool
+        empty: bool,
     }
 
     #[test]

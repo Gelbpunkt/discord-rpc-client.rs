@@ -1,17 +1,15 @@
 use std::{
-    io::{Write, Read, ErrorKind},
+    io::{ErrorKind, Read, Write},
     marker::Sized,
     path::PathBuf,
-    thread,
-    time,
+    thread, time,
 };
 
 use bytes::BytesMut;
 
-use utils;
-use models::message::{Message, OpCode};
 use error::{Error, Result};
-
+use models::message::{Message, OpCode};
+use utils;
 
 /// Wait for a non-blocking connection until it's complete.
 macro_rules! try_until_done {
@@ -27,7 +25,6 @@ macro_rules! try_until_done {
         }
     }
 }
-
 
 pub trait Connection: Sized {
     type Socket: Write + Read;

@@ -1,12 +1,9 @@
-extern crate simplelog;
 extern crate discord_rpc_client;
+extern crate simplelog;
 
-use std::{thread, time};
+use discord_rpc_client::{models::Event, Client as DiscordRPC};
 use simplelog::*;
-use discord_rpc_client::{
-    Client as DiscordRPC,
-    models::Event,
-};
+use std::{thread, time};
 
 fn main() {
     TermLogger::init(LevelFilter::Debug, Config::default()).unwrap();
@@ -15,12 +12,10 @@ fn main() {
 
     drpc.start();
 
-    drpc.subscribe(Event::ActivityJoin, |j| j
-        .secret("123456"))
+    drpc.subscribe(Event::ActivityJoin, |j| j.secret("123456"))
         .expect("Failed to subscribe to event");
 
-    drpc.subscribe(Event::ActivitySpectate, |s| s
-        .secret("123456"))
+    drpc.subscribe(Event::ActivitySpectate, |s| s.secret("123456"))
         .expect("Failed to subscribe to event");
 
     drpc.subscribe(Event::ActivityJoinRequest, |s| s)
@@ -29,5 +24,7 @@ fn main() {
     drpc.unsubscribe(Event::ActivityJoinRequest, |j| j)
         .expect("Failed to unsubscribe from event");
 
-    loop { thread::sleep(time::Duration::from_millis(500)); }
+    loop {
+        thread::sleep(time::Duration::from_millis(500));
+    }
 }
