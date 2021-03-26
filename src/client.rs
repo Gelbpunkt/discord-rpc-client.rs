@@ -29,6 +29,10 @@ impl Client {
         self.connection_manager.start();
     }
 
+    pub fn try_recv(&mut self) -> Result<Message> {
+        self.connection_manager.try_recv()
+    }
+
     fn execute<A, E>(&mut self, cmd: Command, args: A, evt: Option<Event>) -> Result<Payload<E>>
     where
         A: Serialize + Send + Sync,

@@ -1,7 +1,8 @@
 use serde_json::Error as JsonError;
 use std::{
-    io::Error as IoError, result::Result as StdResult,
-    sync::mpsc::RecvTimeoutError as ChannelTimeout,
+    io::Error as IoError,
+    result::Result as StdResult,
+    sync::mpsc::{RecvError, RecvTimeoutError as ChannelTimeout, TryRecvError},
 };
 
 #[derive(Debug)]
@@ -9,6 +10,7 @@ pub enum Error {
     IoError(IoError),
     JsonError(JsonError),
     Timeout(ChannelTimeout),
+    RecvError,
     Conversion,
     SubscriptionFailed,
     ConnectionClosed,
@@ -29,6 +31,18 @@ impl From<JsonError> for Error {
 impl From<ChannelTimeout> for Error {
     fn from(err: ChannelTimeout) -> Self {
         Error::Timeout(err)
+    }
+}
+
+impl From<RecvError> for Error {
+    fn from(_: RecvError) -> Self {
+        Error::RecvError
+    }
+}
+
+impl From<TryRecvError> for Error {
+    fn from(_: TryRecvError) -> Self {
+        Error::RecvError
     }
 }
 
