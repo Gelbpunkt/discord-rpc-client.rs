@@ -12,7 +12,7 @@ use models::{
     commands::{Subscription, SubscriptionArgs},
     message::Message,
     payload::Payload,
-    Command, Event, OpCode,
+    Command, Event, OpCode, ReadyEvent,
 };
 
 pub struct Client {
@@ -31,6 +31,10 @@ impl Client {
 
     pub fn try_recv(&mut self) -> Result<Message> {
         self.connection_manager.try_recv()
+    }
+
+    pub fn ready_data(&self) -> Option<ReadyEvent> {
+        self.connection_manager.ready.clone()
     }
 
     fn execute<A, E>(&mut self, cmd: Command, args: A, evt: Option<Event>) -> Result<Payload<E>>

@@ -6,12 +6,13 @@ use std::{
 
 use super::{Connection, SocketConnection};
 use error::{Error, Result};
-use models::Message;
+use models::{Message, ReadyEvent};
 
 type Tx = Sender<Message>;
 type Rx = Receiver<Message>;
 
 pub struct Manager {
+    pub(crate) ready: Option<ReadyEvent>,
     client_id: u64,
     outbound: (Option<Rx>, Tx),
     inbound: (Rx, Option<Tx>),
@@ -23,6 +24,7 @@ impl Manager {
         let (sender_i, receiver_i) = channel();
 
         Self {
+            ready: None,
             client_id,
             inbound: (receiver_i, Some(sender_i)),
             outbound: (Some(receiver_o), sender_o),
@@ -32,10 +34,12 @@ impl Manager {
     pub fn start(&mut self) {
         let inbound = self.inbound.1.take().unwrap();
         let outbound = self.outbound.0.take().unwrap();
+        let (tx, rx) = channel();
         let client_id = self.client_id;
         thread::spawn(move || {
-            send_and_receive_loop(inbound, outbound, client_id);
+            send_and_receive_loop(inbound, outbound, tx, client_id);
         });
+        self.ready = Some(rx.recv().unwrap());
     }
 
     pub fn send(&self, message: Message) -> Result<()> {
@@ -57,6 +61,7 @@ impl Manager {
 fn send_and_receive_loop(
     mut inbound: Sender<Message>,
     outbound: Receiver<Message>,
+    tx: Sender<ReadyEvent>,
     client_id: u64,
 ) {
     debug!("Starting sender loop");
@@ -73,10 +78,11 @@ fn send_and_receive_loop(
         } else {
             connection = SocketConnection::connect().ok();
             if let Some(ref mut conn) = connection {
-                if conn.handshake(client_id).is_err() {
-                    connection = None;
-                } else {
+                if let Ok(msg) = conn.handshake(client_id) {
                     debug!("Successfully connected to socket");
+                    let _ = tx.send(msg.data.unwrap());
+                } else {
+                    connection = None;
                 }
             }
         }

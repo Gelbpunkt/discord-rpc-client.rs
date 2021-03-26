@@ -48,7 +48,7 @@ macro_rules! builder {
     };
 
     [ @st ( $name:ident ) -> ( $($out:tt)* ) ] => {
-        #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+        #[derive(Debug, Default, PartialEq, Deserialize, Serialize, Clone)]
         pub struct $name { $($out)* }
     };
 

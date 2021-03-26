@@ -8,23 +8,12 @@ use std::{
 use bytes::BytesMut;
 
 use error::{Error, Result};
-use models::message::{Message, OpCode};
+use models::{
+    message::{Message, OpCode},
+    payload::Payload,
+    ReadyEvent,
+};
 use utils;
-
-/// Wait for a non-blocking connection until it's complete.
-macro_rules! try_until_done {
-    [ $e:expr ] => {
-        loop {
-            match $e {
-                Ok(_) => break,
-                Err(Error::IoError(ref err)) if err.kind() == ErrorKind::WouldBlock => (),
-                Err(why) => return Err(why),
-            }
-
-            thread::sleep(time::Duration::from_millis(500));
-        }
-    }
-}
 
 pub trait Connection: Sized {
     type Socket: Write + Read;
@@ -39,17 +28,32 @@ pub trait Connection: Sized {
         Self::ipc_path().join(format!("discord-ipc-{}", n))
     }
 
-    fn handshake(&mut self, client_id: u64) -> Result<()> {
+    fn handshake(&mut self, client_id: u64) -> Result<Payload<ReadyEvent>> {
         let hs = json![{
             "client_id": client_id.to_string(),
             "v": 1,
             "nonce": utils::nonce()
         }];
 
-        try_until_done!(self.send(Message::new(OpCode::Handshake, hs.clone())));
-        try_until_done!(self.recv());
+        loop {
+            match self.send(Message::new(OpCode::Handshake, hs.clone())) {
+                Ok(v) => break,
+                Err(Error::IoError(ref err)) if err.kind() == ErrorKind::WouldBlock => (),
+                Err(why) => return Err(why),
+            }
 
-        Ok(())
+            thread::sleep(time::Duration::from_millis(500));
+        }
+
+        loop {
+            match self.recv() {
+                Ok(v) => return Ok(serde_json::from_str(&v.payload).unwrap()),
+                Err(Error::IoError(ref err)) if err.kind() == ErrorKind::WouldBlock => (),
+                Err(why) => return Err(why),
+            }
+
+            thread::sleep(time::Duration::from_millis(500));
+        }
     }
 
     fn ping(&mut self) -> Result<OpCode> {
